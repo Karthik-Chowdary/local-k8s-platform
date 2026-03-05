@@ -22,9 +22,12 @@ spec:
           hostPort:
             enabled: true
           service:
-            type: LoadBalancer
+            type: ClusterIP
           publishService:
-            enabled: true
+            enabled: false
+          # Report status on ingress objects so ArgoCD sees them as healthy
+          extraArgs:
+            report-node-internal-ip-address: "true"
           # Watch all namespaces for Ingress resources
           watchIngressWithoutClass: true
           ingressClassResource:
