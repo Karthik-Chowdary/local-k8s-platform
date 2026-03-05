@@ -1,0 +1,24 @@
+# Podinfo - Helm Values Reference
+# Chart: podinfo (https://github.com/stefanprodan/podinfo)
+
+replicaCount: 2
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: podinfo.localhost
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 128Mi
+
+ui:
+  color: "#34577c"
+  message: "Welcome to Local K8s Platform! 🚀"

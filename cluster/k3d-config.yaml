@@ -1,0 +1,42 @@
+# k3d cluster configuration
+# Docs: https://k3d.io/v5.7.5/usage/configfile/
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: local-k8s-platform
+servers: 1
+agents: 2
+image: rancher/k3s:v1.31.4-k3s1
+
+# Port mappings: route host 80/443 → k3d loadbalancer → ingress controller
+ports:
+  - port: 80:80
+    nodeFilters:
+      - loadbalancer
+  - port: 443:443
+    nodeFilters:
+      - loadbalancer
+
+# Local container registry for faster image pulls
+registries:
+  create:
+    name: registry.localhost
+    host: "0.0.0.0"
+    hostPort: "5111"
+
+# k3s options
+options:
+  k3s:
+    extraArgs:
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*
+      - arg: --disable=servicelb
+        nodeFilters:
+          - server:*
+
+# Resource limits (optional, good for laptops)
+# env:
+#   - envVar: K3S_NODE_NAME=server-0
+#     nodeFilters:
+#       - server:0

@@ -1,0 +1,31 @@
+# NGINX Ingress Controller - Helm Values Reference
+# Chart: ingress-nginx (https://github.com/kubernetes/ingress-nginx)
+# These values are currently inlined in apps/ingress-nginx.yaml for ArgoCD.
+# Use this file if you prefer external value files or for local helm install.
+
+controller:
+  hostPort:
+    enabled: true
+  service:
+    type: LoadBalancer
+  publishService:
+    enabled: true
+  watchIngressWithoutClass: true
+  ingressClassResource:
+    default: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+  admissionWebhooks:
+    enabled: true
+
+defaultBackend:
+  enabled: false

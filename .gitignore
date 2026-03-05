@@ -1,0 +1,33 @@
+# Helm
+charts/
+*.tgz
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform (if added later)
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Secrets
+*.key
+*.pem
+*.crt
+secrets/
+
+# Temp
+tmp/
+.tmp/

@@ -1,0 +1,93 @@
+# ArgoCD Helm values — optimized for local development
+# Chart: argo-cd (https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd)
+
+global:
+  domain: argocd.localhost
+
+# -- Server configuration
+server:
+  # Run insecure (no TLS) — this is local dev
+  extraArgs:
+    - --insecure
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: argocd.localhost
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    tls: false
+
+  # Lower resource requests for local
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+# -- Controller
+controller:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+# -- Repo Server
+repoServer:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+# -- ApplicationSet Controller
+applicationSet:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+# -- Notifications (disabled for local)
+notifications:
+  enabled: false
+
+# -- Dex (disabled — use built-in auth for local)
+dex:
+  enabled: false
+
+# -- Redis
+redis:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+configs:
+  params:
+    # Run insecure — local only
+    server.insecure: true
+  cm:
+    # Allow status badges
+    statusbadge.enabled: "true"
+    # Track resources in all namespaces
+    resource.customizations.health.argoproj.io_Application: |
+      hs = {}
+      hs.status = "Healthy"
+      hs.message = ""
+      if obj.status ~= nil then
+        if obj.status.health ~= nil then
+          hs.status = obj.status.health.status
+          if obj.status.health.message ~= nil then
+            hs.message = obj.status.health.message
+          end
+        end
+      end
+      return hs
