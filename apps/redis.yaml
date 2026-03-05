@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redis
+  namespace: argocd
+  labels:
+    app.kubernetes.io/managed-by: argo-marketplace
+    marketplace.argo/chart: redis
+    marketplace.argo/repo: cloudpirates-redis
+spec:
+  project: default
+  source:
+    repoURL: oci://registry-1.docker.io/cloudpirates/redis
+    chart: redis
+    targetRevision: 0.25.7
+    helm:
+      values: |
+        # No default values found
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: redis
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
