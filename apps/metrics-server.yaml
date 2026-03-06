@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metrics-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/managed-by: argo-marketplace
+    marketplace.argo/chart: metrics-server
+    marketplace.argo/repo: metrics-server
+spec:
+  project: default
+  source:
+    repoURL: https://kubernetes-sigs.github.io/metrics-server/
+    chart: metrics-server
+    targetRevision: 3.13.0
+    helm:
+      values: |
+        # No default values found
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: metrics-server
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
