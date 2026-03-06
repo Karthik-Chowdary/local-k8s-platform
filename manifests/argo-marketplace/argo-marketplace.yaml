@@ -48,6 +48,26 @@ roleRef:
   name: argo-marketplace
   apiGroup: rbac.authorization.k8s.io
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argo-marketplace-init
+  namespace: argo-marketplace
+data:
+  init.sh: |
+    #!/bin/sh
+    set -e
+    REPO_DIR="/repo/local-k8s-platform"
+    REPO_URL="${GIT_REPO_URL:-https://github.com/Karthik-Chowdary/local-k8s-platform.git}"
+    if [ ! -d "$REPO_DIR/.git" ]; then
+      echo "Cloning repo..."
+      git clone "$REPO_URL" "$REPO_DIR"
+    else
+      echo "Repo exists, pulling latest..."
+      cd "$REPO_DIR" && git pull --ff-only || true
+    fi
+    echo "Repo ready at $REPO_DIR"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -66,6 +86,18 @@ spec:
         app.kubernetes.io/name: argo-marketplace
     spec:
       serviceAccountName: argo-marketplace
+      initContainers:
+        - name: git-clone
+          image: alpine/git:latest
+          command: ["sh", "/scripts/init.sh"]
+          env:
+            - name: GIT_REPO_URL
+              value: "https://github.com/Karthik-Chowdary/local-k8s-platform.git"
+          volumeMounts:
+            - name: repo
+              mountPath: /repo
+            - name: init-script
+              mountPath: /scripts
       containers:
         - name: argo-marketplace
           image: argo-marketplace:latest
@@ -82,7 +114,7 @@ spec:
             - name: CORS_ORIGIN
               value: "*"
             - name: LOCAL_K8S_PLATFORM_PATH
-              value: /repo
+              value: /repo/local-k8s-platform
             - name: ARGOCD_NAMESPACE
               value: argocd
           livenessProbe:
@@ -108,9 +140,11 @@ spec:
               mountPath: /repo
       volumes:
         - name: repo
-          hostPath:
-            path: /home/ubuntu/local-k8s-platform
-            type: Directory
+          emptyDir: {}
+        - name: init-script
+          configMap:
+            name: argo-marketplace-init
+            defaultMode: 0755
 ---
 apiVersion: v1
 kind: Service
