@@ -76,6 +76,12 @@ cd local-k8s-platform
 make up
 ```
 
+Or with the **ArgoCD Marketplace UI** (browse, configure & deploy Helm charts from a web UI):
+
+```bash
+make up-marketplace
+```
+
 That's it. In ~5 minutes you'll have a full platform running.
 
 ## 🌐 What You Get
@@ -88,6 +94,7 @@ That's it. In ~5 minutes you'll have a full platform running.
 | **Alertmanager** | [http://alertmanager.localhost](http://alertmanager.localhost) | — |
 | **Podinfo** | [http://podinfo.localhost](http://podinfo.localhost) | — |
 | **Echoserver** | [http://echoserver.localhost](http://echoserver.localhost) | — |
+| **Marketplace** *(opt-in)* | [http://marketplace.localhost](http://marketplace.localhost) | — |
 
 > 💡 `*.localhost` resolves to `127.0.0.1` on most systems — no `/etc/hosts` edits needed.
 
@@ -103,6 +110,7 @@ That's it. In ~5 minutes you'll have a full platform running.
 
 ```bash
 make up                 # Full platform setup (cluster + all apps)
+make up-marketplace     # Full platform + ArgoCD Marketplace UI
 make down               # Tear everything down
 make status             # Show URLs, pods, ArgoCD sync status
 make prerequisites      # Check/install prerequisites

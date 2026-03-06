@@ -1,4 +1,4 @@
-.PHONY: help up down status prerequisites argocd-password argocd-ui grafana-ui add-app logs
+.PHONY: help up up-marketplace down status prerequisites argocd-password argocd-ui grafana-ui marketplace-ui add-app logs
 
 SHELL := /bin/bash
 CLUSTER_NAME := local-k8s-platform
@@ -20,6 +20,9 @@ help: ## Show this help
 
 up: ## 🚀 Full platform setup (cluster + all apps)
 	@./scripts/setup.sh
+
+up-marketplace: ## 🛒 Full platform setup + ArgoCD Marketplace UI
+	@./scripts/setup.sh --with-marketplace
 
 down: ## 🗑️  Tear everything down
 	@./scripts/teardown.sh
@@ -72,6 +75,11 @@ prometheus-ui: ## 📈 Port-forward Prometheus to localhost:9090
 	@echo "$(GREEN)Prometheus available at: http://localhost:9090$(NC)"
 	@echo "$(YELLOW)Press Ctrl+C to stop$(NC)"
 	@kubectl port-forward svc/kube-prometheus-stack-prometheus -n monitoring 9090:9090
+
+marketplace-ui: ## 🛒 Port-forward ArgoCD Marketplace to localhost:4000
+	@echo "$(GREEN)Marketplace available at: http://localhost:4000$(NC)"
+	@echo "$(YELLOW)Press Ctrl+C to stop$(NC)"
+	@kubectl port-forward svc/argo-marketplace -n argo-marketplace 4000:80
 
 add-app: ## ➕ Instructions for adding a new app
 	@echo ""
