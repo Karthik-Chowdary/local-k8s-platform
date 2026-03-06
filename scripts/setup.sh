@@ -167,6 +167,16 @@ if $WITH_MARKETPLACE; then
     log "Importing image into k3d cluster..."
     k3d image import argo-marketplace:latest -c "$CLUSTER_NAME"
     ok "Image imported into cluster"
+
+    # Copy the ArgoCD app definition into apps/ so app-of-apps picks it up
+    if [ ! -f "$REPO_ROOT/apps/argo-marketplace.yaml" ]; then
+        log "Adding argo-marketplace to apps/ directory..."
+        cp "$REPO_ROOT/optional/argo-marketplace-app.yaml" "$REPO_ROOT/apps/argo-marketplace.yaml"
+        (cd "$REPO_ROOT" && git add apps/argo-marketplace.yaml && git commit -m "feat: enable argo-marketplace (via --with-marketplace)" --no-verify 2>/dev/null && git push origin main 2>/dev/null) || warn "Could not auto-commit (manual push may be needed)"
+        ok "argo-marketplace app added to GitOps"
+    else
+        ok "argo-marketplace app already in apps/"
+    fi
 fi
 
 # ──────────────────────────────────────────────────
