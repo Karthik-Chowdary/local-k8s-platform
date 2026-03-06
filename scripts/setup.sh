@@ -91,9 +91,29 @@ kubectl rollout status deployment/argo-cd-argocd-server -n argocd --timeout=180s
 ok "ArgoCD server is ready"
 
 # ──────────────────────────────────────────────────
-# Step 4: Apply app-of-apps
+# Step 4: Build & import argo-marketplace image
 # ──────────────────────────────────────────────────
-step "Step 4/6 — Deploying app-of-apps"
+step "Step 4/7 — Building ArgoCD Marketplace UI"
+
+ARGO_MARKETPLACE_DIR="$HOME/argo-marketplace"
+if [ -d "$ARGO_MARKETPLACE_DIR" ]; then
+    log "Building argo-marketplace Docker image..."
+    docker build -t argo-marketplace:latest "$ARGO_MARKETPLACE_DIR" --quiet
+    ok "Docker image built"
+
+    log "Importing image into k3d cluster..."
+    k3d image import argo-marketplace:latest -c local-k8s-platform
+    ok "Image imported into cluster"
+else
+    warn "argo-marketplace repo not found at $ARGO_MARKETPLACE_DIR"
+    warn "Skipping image build — clone it from https://github.com/Karthik-Chowdary/argo-marketplace"
+    warn "The argo-marketplace app will be in CrashLoopBackOff until the image is available"
+fi
+
+# ──────────────────────────────────────────────────
+# Step 5: Apply app-of-apps
+# ──────────────────────────────────────────────────
+step "Step 5/7 — Deploying app-of-apps"
 
 log "Applying root Application manifest..."
 kubectl apply -f "$REPO_ROOT/bootstrap/app-of-apps.yaml"
@@ -102,7 +122,7 @@ ok "App-of-apps deployed — ArgoCD will now sync all applications"
 # ──────────────────────────────────────────────────
 # Step 5: Wait for core apps
 # ──────────────────────────────────────────────────
-step "Step 5/6 — Waiting for applications to sync"
+step "Step 6/7 — Waiting for applications to sync"
 
 log "Waiting for ingress-nginx namespace to appear..."
 for i in $(seq 1 60); do
@@ -140,7 +160,7 @@ sleep 60
 # ──────────────────────────────────────────────────
 # Step 6: Summary
 # ──────────────────────────────────────────────────
-step "Step 6/6 — Setup Complete! 🎉"
+step "Step 7/7 — Setup Complete! 🎉"
 
 ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" 2>/dev/null | base64 -d || echo "run: make argocd-password")
 
@@ -157,6 +177,7 @@ echo "  │  Prometheus       http://prometheus.localhost    —          │"
 echo "  │  Alertmanager     http://alertmanager.localhost  —          │"
 echo "  │  Podinfo          http://podinfo.localhost       —          │"
 echo "  │  Echoserver       http://echoserver.localhost    —          │"
+echo "  │  Marketplace      http://marketplace.localhost   —          │"
 echo "  │                                                            │"
 echo "  ├────────────────────────────────────────────────────────────┤"
 echo "  │  Useful commands:                                          │"
