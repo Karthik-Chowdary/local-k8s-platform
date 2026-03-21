@@ -98,6 +98,19 @@ spec:
         # ---- Node Exporter ----
         nodeExporter:
           enabled: true
+        prometheus-node-exporter:
+          extraArgs:
+            - --collector.disable-defaults
+            - --collector.cpu
+            - --collector.meminfo
+            - --collector.diskstats
+            - --collector.filesystem
+            - --collector.loadavg
+            - --collector.netdev
+            - --collector.stat
+            - --collector.time
+            - --collector.uname
+            - --collector.vmstat
 
         # ---- Kube State Metrics ----
         kubeStateMetrics:
