@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: longhorn
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://charts.longhorn.io
+    chart: longhorn
+    targetRevision: 1.11.1
+    helm:
+      values: |
+        defaultSettings:
+          defaultReplicaCount: 2
+          defaultDataPath: /var/lib/longhorn
+          # Only schedule replicas on worker nodes
+          replicaSoftAntiAffinity: true
+          storageReservedPercentageForDefaultDisk: 25
+        persistence:
+          # nfs-client is already default, don't override
+          defaultClass: false
+          defaultClassReplicaCount: 2
+        longhornUI:
+          replicas: 1
+        # Tolerate control-plane taint if present
+        longhornManager:
+          tolerations: []
+        longhornDriver:
+          tolerations: []
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: longhorn-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
