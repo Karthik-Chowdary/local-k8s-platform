@@ -45,6 +45,11 @@ spec:
               memory: 128Mi
             limits:
               memory: 512Mi
+          # Subpath config so redirects go to /grafana/... not /...
+          grafana.ini:
+            server:
+              root_url: "%(protocol)s://%(domain)s/grafana/"
+              serve_from_sub_path: true
           # Additional dashboard providers (ArgoCD)
           dashboardProviders:
             dashboardproviders.yaml:
@@ -68,6 +73,8 @@ spec:
         # ---- Prometheus ----
         prometheus:
           prometheusSpec:
+            externalUrl: "http://192.168.0.227/prometheus"
+            routePrefix: /prometheus
             resources:
               requests:
                 cpu: 100m
@@ -103,6 +110,8 @@ spec:
             hosts:
               - alertmanager.localhost
           alertmanagerSpec:
+            externalUrl: "http://192.168.0.227/alertmanager"
+            routePrefix: /alertmanager
             resources:
               requests:
                 cpu: 25m

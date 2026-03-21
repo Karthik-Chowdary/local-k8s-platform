@@ -9,6 +9,8 @@ server:
   # Run insecure (no TLS) — this is local dev
   extraArgs:
     - --insecure
+    - --basehref=/argocd
+    - --rootpath=/argocd
 
   ingress:
     enabled: true

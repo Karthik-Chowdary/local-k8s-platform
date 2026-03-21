@@ -1,0 +1,84 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: immich
+  namespace: argocd
+  labels:
+    app.kubernetes.io/managed-by: argo-marketplace
+spec:
+  project: default
+  source:
+    repoURL: https://immich-app.github.io/immich-charts
+    chart: immich
+    targetRevision: 0.10.3
+    helm:
+      values: |
+        controllers:
+          main:
+            containers:
+              main:
+                env:
+                  DB_HOSTNAME: immich-postgres-postgresql.immich.svc.cluster.local
+                  DB_PORT: "5432"
+                  DB_USERNAME: immich
+                  DB_PASSWORD: immich
+                  DB_DATABASE_NAME: immich
+
+        immich:
+          persistence:
+            library:
+              existingClaim: immich-library
+
+        valkey:
+          enabled: true
+
+        server:
+          controllers:
+            main:
+              pod:
+                nodeSelector:
+                  kubernetes.io/hostname: ubuntu4u
+              containers:
+                main:
+                  image:
+                    tag: v2.6.1
+          ingress:
+            main:
+              enabled: true
+              ingressClassName: nginx
+              annotations:
+                nginx.ingress.kubernetes.io/proxy-body-size: "0"
+              hosts:
+                - host: immich.localhost
+                  paths:
+                    - path: /
+                      service:
+                        identifier: main
+
+        machine-learning:
+          controllers:
+            main:
+              pod:
+                nodeSelector:
+                  kubernetes.io/hostname: ubuntu4u
+              containers:
+                main:
+                  image:
+                    tag: v2.6.1-cuda
+                  resources:
+                    limits:
+                      nvidia.com/gpu: 2
+          persistence:
+            cache:
+              enabled: true
+              size: 10Gi
+              type: emptyDir
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: immich
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

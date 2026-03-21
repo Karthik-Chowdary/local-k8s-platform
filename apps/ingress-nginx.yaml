@@ -19,6 +19,9 @@ spec:
           # Use hostPort for k3d compatibility
           hostPort:
             enabled: true
+          # Pin to control plane node so hostPort is always on ubuntu4u (192.168.0.227)
+          nodeSelector:
+            kubernetes.io/hostname: ubuntu4u
           service:
             type: ClusterIP
           publishService:
