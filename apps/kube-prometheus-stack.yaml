@@ -24,6 +24,13 @@ spec:
             ingressClassName: nginx
             hosts:
               - grafana.localhost
+          # Persistent storage for dashboards, plugins, and settings
+          persistence:
+            enabled: true
+            storageClassName: nfs-client
+            accessModes:
+              - ReadWriteOnce
+            size: 2Gi
           # Sidecar for dashboard auto-discovery
           sidecar:
             dashboards:
@@ -61,7 +68,6 @@ spec:
         # ---- Prometheus ----
         prometheus:
           prometheusSpec:
-            retention: 24h
             resources:
               requests:
                 cpu: 100m
@@ -72,8 +78,17 @@ spec:
             serviceMonitorSelectorNilUsesHelmValues: false
             podMonitorSelectorNilUsesHelmValues: false
             ruleSelectorNilUsesHelmValues: false
-            # Storage (ephemeral for local — restarts lose data)
-            storageSpec: {}
+            # Persistent storage on NFS — survives restarts
+            retention: 7d
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: nfs-client
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 10Gi
           ingress:
             enabled: true
             ingressClassName: nginx
@@ -94,6 +109,15 @@ spec:
                 memory: 64Mi
               limits:
                 memory: 256Mi
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: nfs-client
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 1Gi
 
         # ---- Node Exporter ----
         nodeExporter:
