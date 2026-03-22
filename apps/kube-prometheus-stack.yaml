@@ -35,7 +35,8 @@ spec:
           nodeSelector:
             kubernetes.io/hostname: ubuntu4u
           # Skip chown init container — NFS server handles permissions
-          initChownData: false
+          initChownData:
+            enabled: false
           # Sidecar for dashboard auto-discovery
           sidecar:
             dashboards:
