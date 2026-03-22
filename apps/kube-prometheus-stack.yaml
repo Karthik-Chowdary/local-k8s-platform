@@ -138,6 +138,18 @@ spec:
         nodeExporter:
           enabled: true
         prometheus-node-exporter:
+          # Kill any orphaned node_exporter process holding port 9100 before starting.
+          # On ARM (k3s-node2) the containerd shim sometimes leaves a stale process
+          # behind after pod termination, causing the new pod to fail binding port 9100.
+          extraInitContainers:
+            - name: kill-stale-port
+              image: busybox:1.36
+              securityContext:
+                privileged: true
+              command:
+                - sh
+                - -c
+                - fuser -k 9100/tcp 2>/dev/null; sleep 1; exit 0
           extraArgs:
             - --collector.disable-defaults
             - --collector.cpu
