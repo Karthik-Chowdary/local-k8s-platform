@@ -16,6 +16,25 @@ spec:
       values: |
         crds:
           enabled: true
+        # Pin to ubuntu4u (x86) — ARM node has kubelet API issues
+        nodeSelector:
+          kubernetes.io/hostname: ubuntu4u
+        webhook:
+          nodeSelector:
+            kubernetes.io/hostname: ubuntu4u
+        cainjector:
+          nodeSelector:
+            kubernetes.io/hostname: ubuntu4u
+        # Mount host CA bundle so ACME TLS verification works
+        volumes:
+          - name: host-ssl
+            hostPath:
+              path: /etc/ssl/certs
+              type: Directory
+        volumeMounts:
+          - name: host-ssl
+            mountPath: /etc/ssl/certs
+            readOnly: true
         resources:
           requests:
             cpu: 25m
