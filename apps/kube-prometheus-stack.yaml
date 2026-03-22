@@ -24,13 +24,18 @@ spec:
             ingressClassName: nginx
             hosts:
               - grafana.localhost
-          # Persistent storage for dashboards, plugins, and settings
+          # NFS storage — works fine since pod is pinned to ubuntu4u (x86)
           persistence:
             enabled: true
             storageClassName: nfs-client
             accessModes:
               - ReadWriteOnce
             size: 2Gi
+          # Pin to ubuntu4u — avoids ARM nodes where NFS init-chown fails
+          nodeSelector:
+            kubernetes.io/hostname: ubuntu4u
+          # Skip chown init container — NFS server handles permissions
+          initChownData: false
           # Sidecar for dashboard auto-discovery
           sidecar:
             dashboards:
