@@ -22,6 +22,8 @@ spec:
           ingress:
             enabled: true
             ingressClassName: nginx
+            annotations:
+              nginx.ingress.kubernetes.io/ssl-redirect: "false"
             hosts:
               - grafana.karthikchowdary.com
             tls:
@@ -109,6 +111,8 @@ spec:
           ingress:
             enabled: true
             ingressClassName: nginx
+            annotations:
+              nginx.ingress.kubernetes.io/ssl-redirect: "false"
             hosts:
               - prometheus.karthikchowdary.com
             tls:
@@ -121,6 +125,8 @@ spec:
           ingress:
             enabled: true
             ingressClassName: nginx
+            annotations:
+              nginx.ingress.kubernetes.io/ssl-redirect: "false"
             hosts:
               - alertmanager.karthikchowdary.com
             tls:

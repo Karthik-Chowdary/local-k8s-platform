@@ -16,6 +16,7 @@ server:
     hostname: argocd.karthikchowdary.com
     annotations:
       nginx.ingress.kubernetes.io/backend-protocol: HTTP
+      nginx.ingress.kubernetes.io/ssl-redirect: "false"
     tls: true
     extraTls:
       - secretName: karthikchowdary-wildcard-tls
