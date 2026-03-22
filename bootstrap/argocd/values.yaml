@@ -10,6 +10,10 @@ server:
   extraArgs:
     - --insecure
 
+  # Pin to ubuntu4u — k3s-node2 ARM has flannel IP exhaustion from crash loops
+  nodeSelector:
+    kubernetes.io/hostname: ubuntu4u
+
   ingress:
     enabled: true
     ingressClassName: nginx
@@ -17,6 +21,8 @@ server:
     annotations:
       nginx.ingress.kubernetes.io/backend-protocol: HTTP
       nginx.ingress.kubernetes.io/ssl-redirect: "false"
+      # ArgoCD v3 defaults to /argocd — redirect root to it
+      nginx.ingress.kubernetes.io/app-root: /argocd
     tls: true
     extraTls:
       - secretName: karthikchowdary-wildcard-tls
@@ -79,6 +85,9 @@ configs:
   params:
     # Run insecure — local only
     server.insecure: true
+    # ArgoCD v3 default — serve UI at /argocd (nginx redirects / → /argocd)
+    server.basehref: /argocd
+    server.rootpath: /argocd
   cm:
     # Allow status badges
     statusbadge.enabled: "true"

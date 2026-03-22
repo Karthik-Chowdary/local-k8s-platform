@@ -167,7 +167,19 @@ spec:
               command:
                 - sh
                 - -c
-                - fuser -k 9100/tcp 2>/dev/null; sleep 1; exit 0
+                - |
+                  # hostPID=true is set at pod level, so /proc shows host PIDs.
+                  # fuser is unreliable on ARM; scan /proc/*/net/tcp directly.
+                  # Port 9100 = 0x238C
+                  for pid_dir in /proc/[0-9]*; do
+                    pid=${pid_dir##*/}
+                    if grep -q ':238C ' ${pid_dir}/net/tcp 2>/dev/null || \
+                       grep -q ':238C ' ${pid_dir}/net/tcp6 2>/dev/null; then
+                      echo "Killing stale PID ${pid} holding port 9100"
+                      kill -9 ${pid} 2>/dev/null || true
+                    fi
+                  done
+                  sleep 1
           extraArgs:
             - --collector.disable-defaults
             - --collector.cpu
