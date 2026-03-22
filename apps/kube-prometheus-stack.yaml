@@ -23,7 +23,11 @@ spec:
             enabled: true
             ingressClassName: nginx
             hosts:
-              - grafana.localhost
+              - grafana.karthikchowdary.com
+            tls:
+              - secretName: karthikchowdary-wildcard-tls
+                hosts:
+                  - grafana.karthikchowdary.com
           # NFS storage — works fine since pod is pinned to ubuntu4u (x86)
           persistence:
             enabled: true
@@ -54,8 +58,8 @@ spec:
           # Subpath config so redirects go to /grafana/... not /...
           grafana.ini:
             server:
-              root_url: "%(protocol)s://%(domain)s/grafana/"
-              serve_from_sub_path: true
+              root_url: "https://grafana.karthikchowdary.com"
+              serve_from_sub_path: false
           # Additional dashboard providers (ArgoCD)
           dashboardProviders:
             dashboardproviders.yaml:
@@ -79,8 +83,8 @@ spec:
         # ---- Prometheus ----
         prometheus:
           prometheusSpec:
-            externalUrl: "http://192.168.0.227/prometheus"
-            routePrefix: /prometheus
+            externalUrl: "https://prometheus.karthikchowdary.com"
+            routePrefix: /
             resources:
               requests:
                 cpu: 100m
@@ -106,7 +110,11 @@ spec:
             enabled: true
             ingressClassName: nginx
             hosts:
-              - prometheus.localhost
+              - prometheus.karthikchowdary.com
+            tls:
+              - secretName: karthikchowdary-wildcard-tls
+                hosts:
+                  - prometheus.karthikchowdary.com
 
         # ---- Alertmanager ----
         alertmanager:
@@ -114,10 +122,14 @@ spec:
             enabled: true
             ingressClassName: nginx
             hosts:
-              - alertmanager.localhost
+              - alertmanager.karthikchowdary.com
+            tls:
+              - secretName: karthikchowdary-wildcard-tls
+                hosts:
+                  - alertmanager.karthikchowdary.com
           alertmanagerSpec:
-            externalUrl: "http://192.168.0.227/alertmanager"
-            routePrefix: /alertmanager
+            externalUrl: "https://alertmanager.karthikchowdary.com"
+            routePrefix: /
             resources:
               requests:
                 cpu: 25m

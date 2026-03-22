@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: karthikchowdary-wildcard
+  namespace: cert-manager
+spec:
+  secretName: karthikchowdary-wildcard-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  commonName: "*.karthikchowdary.com"
+  dnsNames:
+    - "*.karthikchowdary.com"
+    - "karthikchowdary.com"

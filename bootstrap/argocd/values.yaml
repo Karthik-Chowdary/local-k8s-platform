@@ -2,23 +2,25 @@
 # Chart: argo-cd (https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd)
 
 global:
-  domain: argocd.localhost
+  domain: argocd.karthikchowdary.com
 
 # -- Server configuration
 server:
-  # Run insecure (no TLS) — this is local dev
+  # Run insecure — TLS terminated at Cloudflare/ingress
   extraArgs:
     - --insecure
-    - --basehref=/argocd
-    - --rootpath=/argocd
 
   ingress:
     enabled: true
     ingressClassName: nginx
-    hostname: argocd.localhost
+    hostname: argocd.karthikchowdary.com
     annotations:
       nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    tls: false
+    tls: true
+    extraTls:
+      - secretName: karthikchowdary-wildcard-tls
+        hosts:
+          - argocd.karthikchowdary.com
 
   # Lower resource requests for local
   resources:
