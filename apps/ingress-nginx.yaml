@@ -44,6 +44,17 @@ spec:
             serviceMonitor:
               enabled: true
               namespace: monitoring
+          # Looser probes for ARM nodes (Pi is slow to respond within default 1s)
+          livenessProbe:
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 5
+          readinessProbe:
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
           # Admission webhooks
           admissionWebhooks:
             enabled: true
