@@ -10,12 +10,17 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: oci://registry-1.docker.io/cloudpirates/redis
+    repoURL: https://charts.bitnami.com/bitnami
     chart: redis
-    targetRevision: 0.25.7
+    targetRevision: "20.11.3"
     helm:
       values: |
-        # No default values found
+        architecture: standalone
+        auth:
+          enabled: false
+        master:
+          persistence:
+            enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: redis
