@@ -16,10 +16,12 @@ spec:
     helm:
       values: |
         global:
-          # Bitnami moved images from Docker Hub to their own registry
-          imageRegistry: registry.bitnami.com
           security:
             allowInsecureImages: true
+        image:
+          registry: docker.io
+          repository: redis
+          tag: 7-alpine
         architecture: standalone
         auth:
           enabled: false
