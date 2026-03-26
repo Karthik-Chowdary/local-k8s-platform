@@ -15,13 +15,8 @@ spec:
     targetRevision: "20.11.3"
     helm:
       values: |
-        global:
-          security:
-            allowInsecureImages: true
         image:
-          registry: docker.io
-          repository: redis
-          tag: 7-alpine
+          tag: latest
         architecture: standalone
         auth:
           enabled: false
