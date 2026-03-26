@@ -18,6 +18,8 @@ spec:
         global:
           # Bitnami moved images from Docker Hub to their own registry
           imageRegistry: registry.bitnami.com
+          security:
+            allowInsecureImages: true
         architecture: standalone
         auth:
           enabled: false
