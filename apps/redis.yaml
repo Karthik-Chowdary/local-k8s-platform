@@ -15,6 +15,9 @@ spec:
     targetRevision: "20.11.3"
     helm:
       values: |
+        global:
+          # Bitnami moved images from Docker Hub to their own registry
+          imageRegistry: registry.bitnami.com
         architecture: standalone
         auth:
           enabled: false
