@@ -10,19 +10,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://charts.bitnami.com/bitnami
-    chart: redis
-    targetRevision: "20.11.3"
-    helm:
-      values: |
-        image:
-          tag: latest
-        architecture: standalone
-        auth:
-          enabled: false
-        master:
-          persistence:
-            enabled: false
+    repoURL: https://github.com/Karthik-Chowdary/local-k8s-platform.git
+    targetRevision: main
+    path: manifests/redis
   destination:
     server: https://kubernetes.default.svc
     namespace: redis
