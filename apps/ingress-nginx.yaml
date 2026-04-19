@@ -17,6 +17,11 @@ spec:
       values: |
         controller:
           kind: DaemonSet
+          # Trust X-Forwarded-Proto from Cloudflare Tunnel (cloudflared sets it
+          # to "https" when the original client used TLS). Without this, nginx
+          # sees plain HTTP and Authentik emits http:// issuer URLs.
+          config:
+            use-forwarded-headers: "true"
           # Use hostPort so every node exposes ports 80/443
           hostPort:
             enabled: true
