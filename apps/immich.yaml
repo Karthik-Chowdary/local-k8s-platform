@@ -33,6 +33,37 @@ spec:
           enabled: true
 
         server:
+          # OAuth via Authentik — config is mounted from ConfigMap below.
+          # Client ID/secret come from the `immich-oauth-authentik` Secret
+          # (created out-of-band — see BOOTSTRAP.md). Immich does ${VAR}
+          # substitution inside the JSON against pod env vars.
+          configMaps:
+            oauth-config:
+              enabled: true
+              data:
+                immich.json: |
+                  {
+                    "oauth": {
+                      "enabled": true,
+                      "issuerUrl": "https://auth.karthikchowdary.com/application/o/immich/",
+                      "clientId": "${IMMICH_OAUTH_CLIENT_ID}",
+                      "clientSecret": "${IMMICH_OAUTH_CLIENT_SECRET}",
+                      "buttonText": "Sign in with Authentik",
+                      "autoRegister": true,
+                      "autoLaunch": false,
+                      "scope": "openid email profile",
+                      "signingAlgorithm": "RS256",
+                      "profileSigningAlgorithm": "none",
+                      "storageLabelClaim": "preferred_username",
+                      "storageQuotaClaim": "immich_quota",
+                      "roleClaim": "immich_role",
+                      "mobileOverrideEnabled": false,
+                      "mobileRedirectUri": "",
+                      "tokenEndpointAuthMethod": "client_secret_post",
+                      "defaultStorageQuota": null,
+                      "timeout": 30000
+                    }
+                  }
           controllers:
             main:
               pod:
@@ -42,6 +73,22 @@ spec:
                 main:
                   image:
                     tag: v2.6.1
+                  env:
+                    IMMICH_CONFIG_FILE: /config/immich.json
+                  envFrom:
+                    - secretRef:
+                        name: immich-oauth-authentik
+          persistence:
+            oauth-config:
+              enabled: true
+              type: configMap
+              name: immich-server-oauth-config
+              advancedMounts:
+                main:
+                  main:
+                    - path: /config/immich.json
+                      subPath: immich.json
+                      readOnly: true
           ingress:
             main:
               enabled: true
