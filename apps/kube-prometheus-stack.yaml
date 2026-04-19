@@ -19,6 +19,10 @@ spec:
         grafana:
           enabled: true
           adminPassword: admin
+          # Client ID + secret are injected via the `grafana-oauth-authentik`
+          # secret (monitoring ns, created out-of-band — not in git).
+          # The grafana.ini stanza below references them as $__env{...}.
+          envFromSecret: grafana-oauth-authentik
           ingress:
             enabled: true
             ingressClassName: nginx
@@ -62,6 +66,29 @@ spec:
             server:
               root_url: "https://grafana.karthikchowdary.com"
               serve_from_sub_path: false
+            auth:
+              disable_login_form: false
+            "auth.generic_oauth":
+              enabled: true
+              name: Authentik
+              icon: signin
+              allow_sign_up: true
+              # auto_login + use_refresh_token=true together cause a logout loop
+              # on Grafana 11.5: no refresh token returned -> logout -> auto_login
+              # redirects right back to Authentik. Keep both off.
+              auto_login: false
+              use_refresh_token: false
+              client_id: ${GF_AUTH_GENERIC_OAUTH_CLIENT_ID}
+              client_secret: ${GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
+              scopes: "openid profile email"
+              auth_url: https://auth.karthikchowdary.com/application/o/authorize/
+              token_url: https://auth.karthikchowdary.com/application/o/token/
+              api_url: https://auth.karthikchowdary.com/application/o/userinfo/
+              # Access restriction is enforced in Authentik (policy bound to the
+              # Grafana Application) — only svskarthikchowdary@gmail.com gets a
+              # token. Grafana trusts that gate.
+              role_attribute_path: "contains(groups, 'authentik Admins') && 'Admin' || 'Viewer'"
+              allow_assign_grafana_admin: true
           # Additional dashboard providers (ArgoCD)
           dashboardProviders:
             dashboardproviders.yaml:
