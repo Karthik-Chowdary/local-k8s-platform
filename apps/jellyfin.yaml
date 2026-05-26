@@ -25,6 +25,38 @@ spec:
                 runAsGroup: 988
                 fsGroup: 988
                 supplementalGroups: [988]
+            initContainers:
+              # Idempotent install of the SSO-Auth plugin into the config PVC.
+              # If the DLL is already present, this exits 0 immediately —
+              # safe to re-run on every pod start, never touches the
+              # plugin's XML config under /config/plugins/configurations/.
+              install-sso-plugin:
+                image:
+                  repository: python
+                  tag: "3.12-alpine"
+                command: ["python3", "-c"]
+                args:
+                  - |
+                    import urllib.request, zipfile, os, hashlib, sys
+                    VERSION = "3.5.2.4"
+                    URL = f"https://github.com/9p4/jellyfin-plugin-sso/releases/download/v{VERSION}/sso-authentication_{VERSION}.zip"
+                    SHA256 = "f0341638f87a3596105057e32a8b18409f1c15a4449fda0c1e3010d7543e9c28"
+                    DEST = f"/config/plugins/SSO Authentication_{VERSION}"
+                    MARKER = f"{DEST}/SSO-Auth.dll"
+                    if os.path.exists(MARKER):
+                        print(f"plugin {VERSION} already present, skipping")
+                        sys.exit(0)
+                    print(f"downloading {URL}")
+                    zip_path = "/tmp/sso.zip"
+                    urllib.request.urlretrieve(URL, zip_path)
+                    h = hashlib.sha256(open(zip_path, "rb").read()).hexdigest()
+                    if h != SHA256:
+                        print(f"checksum mismatch: got {h}, expected {SHA256}", file=sys.stderr)
+                        sys.exit(1)
+                    os.makedirs(DEST, exist_ok=True)
+                    with zipfile.ZipFile(zip_path) as z:
+                        z.extractall(DEST)
+                    print(f"installed plugin {VERSION} -> {DEST}")
             containers:
               app:
                 image:
