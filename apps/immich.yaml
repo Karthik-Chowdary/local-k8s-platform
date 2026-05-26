@@ -82,7 +82,7 @@ spec:
             oauth-config:
               enabled: true
               type: configMap
-              name: immich-server-oauth-config
+              name: immich-server
               advancedMounts:
                 main:
                   main:
@@ -119,7 +119,7 @@ spec:
                     tag: v2.6.1-cuda
                   resources:
                     limits:
-                      nvidia.com/gpu: 2
+                      nvidia.com/gpu: 1
           persistence:
             cache:
               enabled: true
