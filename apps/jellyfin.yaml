@@ -26,15 +26,22 @@ spec:
                 fsGroup: 988
                 supplementalGroups: [988]
             initContainers:
-              # Idempotent install of the SSO-Auth plugin into the config PVC.
-              # If the DLL is already present, this exits 0 immediately —
-              # safe to re-run on every pod start, never touches the
-              # plugin's XML config under /config/plugins/configurations/.
+              # Idempotent install of the SSO-Auth plugin DLL + bootstrap of
+              # its XML config. Both steps skip if already present, so this
+              # is safe to re-run on every pod start without breaking
+              # existing UI-edited config or runtime state (e.g. the plugin's
+              # CanonicalLinks user-mapping that gets populated on first
+              # SSO login). To re-apply config from git, delete the XML in
+              # the PVC and restart the pod — the initContainer will
+              # rewrite it from the template.
               install-sso-plugin:
                 image:
                   repository: python
                   tag: "3.12-alpine"
                 command: ["python3", "-c"]
+                envFrom:
+                  - secretRef:
+                      name: jellyfin-oauth-authentik
                 args:
                   - |
                     import urllib.request, zipfile, os, hashlib, sys
@@ -44,19 +51,37 @@ spec:
                     DEST = f"/config/plugins/SSO Authentication_{VERSION}"
                     MARKER = f"{DEST}/SSO-Auth.dll"
                     if os.path.exists(MARKER):
-                        print(f"plugin {VERSION} already present, skipping")
-                        sys.exit(0)
-                    print(f"downloading {URL}")
-                    zip_path = "/tmp/sso.zip"
-                    urllib.request.urlretrieve(URL, zip_path)
-                    h = hashlib.sha256(open(zip_path, "rb").read()).hexdigest()
-                    if h != SHA256:
-                        print(f"checksum mismatch: got {h}, expected {SHA256}", file=sys.stderr)
-                        sys.exit(1)
-                    os.makedirs(DEST, exist_ok=True)
-                    with zipfile.ZipFile(zip_path) as z:
-                        z.extractall(DEST)
-                    print(f"installed plugin {VERSION} -> {DEST}")
+                        print(f"plugin {VERSION} DLL already present, skipping install")
+                    else:
+                        print(f"downloading {URL}")
+                        zip_path = "/tmp/sso.zip"
+                        urllib.request.urlretrieve(URL, zip_path)
+                        h = hashlib.sha256(open(zip_path, "rb").read()).hexdigest()
+                        if h != SHA256:
+                            print(f"checksum mismatch: got {h}, expected {SHA256}", file=sys.stderr)
+                            sys.exit(1)
+                        os.makedirs(DEST, exist_ok=True)
+                        with zipfile.ZipFile(zip_path) as z:
+                            z.extractall(DEST)
+                        print(f"installed plugin {VERSION} -> {DEST}")
+                    XML_DEST = "/config/plugins/configurations/SSO-Auth.xml"
+                    XML_TEMPLATE = "/sso-template/SSO-Auth.xml"
+                    if os.path.exists(XML_DEST):
+                        print(f"{XML_DEST} already present, leaving as-is")
+                    elif os.path.exists(XML_TEMPLATE):
+                        cid = os.environ.get("client_id", "")
+                        csec = os.environ.get("client_secret", "")
+                        if not cid or not csec:
+                            print("client_id/client_secret env vars missing", file=sys.stderr)
+                            sys.exit(1)
+                        os.makedirs(os.path.dirname(XML_DEST), exist_ok=True)
+                        tpl = open(XML_TEMPLATE).read()
+                        tpl = tpl.replace("__OID_CLIENT_ID__", cid).replace("__OID_CLIENT_SECRET__", csec)
+                        with open(XML_DEST, "w") as f:
+                            f.write(tpl)
+                        print(f"bootstrapped {XML_DEST} from template")
+                    else:
+                        print(f"no template at {XML_TEMPLATE}, skipping XML bootstrap")
             containers:
               app:
                 image:
@@ -94,6 +119,56 @@ spec:
                         port: 8096
                       initialDelaySeconds: 10
                       periodSeconds: 10
+
+        # SSO-Auth plugin XML config template. Mounted into the
+        # install-sso-plugin initContainer at /sso-template/SSO-Auth.xml;
+        # the init script substitutes __OID_CLIENT_ID__ / __OID_CLIENT_SECRET__
+        # (from the jellyfin-oauth-authentik Secret) and writes it to
+        # /config/plugins/configurations/SSO-Auth.xml on fresh deploys.
+        configMaps:
+          sso-template:
+            enabled: true
+            data:
+              SSO-Auth.xml: |
+                <?xml version="1.0" encoding="utf-8"?>
+                <PluginConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                  <SamlConfigs />
+                  <OidConfigs>
+                    <item>
+                      <key>
+                        <string>authentik</string>
+                      </key>
+                      <value>
+                        <PluginConfiguration>
+                          <OidEndpoint>https://auth.karthikchowdary.com/application/o/jellyfin/</OidEndpoint>
+                          <OidClientId>__OID_CLIENT_ID__</OidClientId>
+                          <OidSecret>__OID_CLIENT_SECRET__</OidSecret>
+                          <Enabled>true</Enabled>
+                          <EnableAuthorization>false</EnableAuthorization>
+                          <EnableAllFolders>true</EnableAllFolders>
+                          <EnabledFolders />
+                          <AdminRoles />
+                          <Roles />
+                          <EnableFolderRoles>true</EnableFolderRoles>
+                          <EnableLiveTvRoles>true</EnableLiveTvRoles>
+                          <EnableLiveTv>false</EnableLiveTv>
+                          <EnableLiveTvManagement>false</EnableLiveTvManagement>
+                          <LiveTvRoles />
+                          <LiveTvManagementRoles />
+                          <FolderRoleMappings />
+                          <OidScopes />
+                          <SchemeOverride>https</SchemeOverride>
+                          <NewPath>true</NewPath>
+                          <CanonicalLinks />
+                          <DefaultUsernameClaim>preferred_username</DefaultUsernameClaim>
+                          <DisableHttps>false</DisableHttps>
+                          <DoNotValidateEndpoints>false</DoNotValidateEndpoints>
+                          <DoNotValidateIssuerName>false</DoNotValidateIssuerName>
+                        </PluginConfiguration>
+                      </value>
+                    </item>
+                  </OidConfigs>
+                </PluginConfiguration>
 
         service:
           app:
@@ -154,6 +229,18 @@ spec:
             sizeLimit: 4Gi
             globalMounts:
               - path: /cache
+          # SSO-Auth.xml template — mounted ONLY into the init container so
+          # the main jellyfin process never sees the templated (unsubstituted)
+          # XML. The init script reads from here and writes the substituted
+          # copy into the PVC at /config/plugins/configurations/SSO-Auth.xml.
+          sso-template:
+            type: configMap
+            name: jellyfin-sso-template
+            advancedMounts:
+              jellyfin:
+                install-sso-plugin:
+                  - path: /sso-template
+                    readOnly: true
   destination:
     server: https://kubernetes.default.svc
     namespace: jellyfin
