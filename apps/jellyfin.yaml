@@ -32,7 +32,7 @@ spec:
                   tag: "10.10.7"
                 env:
                   TZ: America/Los_Angeles
-                  JELLYFIN_PublishedServerUrl: https://jellyfin.karthikchowdary.com
+                  JELLYFIN_PublishedServerUrl: https://media.karthikchowdary.com
                   # Hardware-accel: tells Jellyfin's ffmpeg to use NVENC/NVDEC
                   NVIDIA_VISIBLE_DEVICES: all
                   NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
@@ -80,7 +80,7 @@ spec:
               nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
               nginx.ingress.kubernetes.io/ssl-redirect: "false"
             hosts:
-              - host: jellyfin.karthikchowdary.com
+              - host: media.karthikchowdary.com
                 paths:
                   - path: /
                     pathType: Prefix
@@ -90,7 +90,7 @@ spec:
             tls:
               - secretName: karthikchowdary-wildcard-tls
                 hosts:
-                  - jellyfin.karthikchowdary.com
+                  - media.karthikchowdary.com
 
         persistence:
           # Jellyfin's SQLite DB lives here — local NVMe, NOT NFS
