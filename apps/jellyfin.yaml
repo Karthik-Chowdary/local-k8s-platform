@@ -235,7 +235,7 @@ spec:
           # copy into the PVC at /config/plugins/configurations/SSO-Auth.xml.
           sso-template:
             type: configMap
-            name: jellyfin-sso-template
+            name: jellyfin
             advancedMounts:
               jellyfin:
                 install-sso-plugin:
