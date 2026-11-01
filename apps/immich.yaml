@@ -33,10 +33,10 @@ spec:
           enabled: true
 
         server:
-          # OAuth via Authentik — config is mounted from ConfigMap below.
-          # Client ID/secret come from the `immich-oauth-authentik` Secret
-          # (created out-of-band — see BOOTSTRAP.md). Immich does ${VAR}
-          # substitution inside the JSON against pod env vars.
+          # OAuth via Authentik. The ConfigMap below is a *template*: Immich does NOT
+          # expand ${VAR} in IMMICH_CONFIG_FILE, so the `render-config` init container
+          # substitutes the client ID/secret from the `immich-oauth-authentik` Secret
+          # (created out-of-band, see BOOTSTRAP.md) into an in-memory /config/immich.json.
           configMaps:
             oauth-config:
               enabled: true
@@ -69,6 +69,23 @@ spec:
               pod:
                 nodeSelector:
                   kubernetes.io/hostname: ubuntu4u
+              initContainers:
+                render-config:
+                  image:
+                    repository: busybox
+                    tag: "1.36"
+                  envFrom:
+                    - secretRef:
+                        name: immich-oauth-authentik
+                  command:
+                    - sh
+                    - -c
+                    - |
+                      set -eu
+                      sed -e "s|\${IMMICH_OAUTH_CLIENT_ID}|${IMMICH_OAUTH_CLIENT_ID}|" \
+                          -e "s|\${IMMICH_OAUTH_CLIENT_SECRET}|${IMMICH_OAUTH_CLIENT_SECRET}|" \
+                          /template/immich.json > /config/immich.json
+                      if grep -q 'IMMICH_OAUTH_' /config/immich.json; then echo "placeholder left in immich.json" >&2; exit 1; fi
               containers:
                 main:
                   image:
@@ -85,9 +102,19 @@ spec:
               name: immich-server
               advancedMounts:
                 main:
+                  render-config:
+                    - path: /template
+                      readOnly: true
+            rendered-config:
+              enabled: true
+              type: emptyDir
+              medium: Memory
+              advancedMounts:
+                main:
+                  render-config:
+                    - path: /config
                   main:
-                    - path: /config/immich.json
-                      subPath: immich.json
+                    - path: /config
                       readOnly: true
           ingress:
             main:
