@@ -62,7 +62,7 @@ spec:
               memory: 384Mi
             limits:
               cpu: 1000m
-              memory: 1Gi
+              memory: 2Gi  # migrations on start exceed 1Gi (OOMKilled crashloop)
 
         worker:
           replicas: 1
