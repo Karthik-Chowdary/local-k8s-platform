@@ -43,6 +43,9 @@ spec:
               data:
                 immich.json: |
                   {
+                    "image": {
+                      "thumbnail": { "size": 720 }
+                    },
                     "oauth": {
                       "enabled": true,
                       "issuerUrl": "https://auth.karthikchowdary.com/application/o/immich/",
